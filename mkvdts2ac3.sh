@@ -392,11 +392,9 @@ if [ -z $DTSTRACK ]; then
 	doprint ""
 	doprint $"Find first DTS track in MKV file."
 	doprint "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
-	DTSTRACK="DTSTRACK" #Value for debugging
 	dopause
+	DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
 	if [ $EXECUTE = 1 ]; then
-		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
-
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
 			error $"There are no DTS tracks in '$MKVFILE'."
@@ -409,11 +407,10 @@ else
 	doprint ""
 	doprint $"Checking to see if DTS track specified via arguments is valid."
 	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
-	VALID=$"VALID" #Value for debugging
 	dopause
-	if [ $EXECUTE = 1 ]; then
-		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
+	VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
 
+	if [ $EXECUTE = 1 ]; then
 		if [ -z "$VALID" ]; then
 			error $"Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
 			exit 1
@@ -427,36 +424,33 @@ fi
 doprint ""
 doprint $"Extract track information for selected DTS track."
 doprint "> mkvinfo \"$MKVFILE\""
+doprint "---------MKVINFO OUTPUT---------"
 
-INFO=$"INFO" #Value for debugging
 dopause
-if [ $EXECUTE = 1 ]; then
-	INFO=$(mkvinfo "$MKVFILE")
-	FIRSTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $DTSTRACK" | cut -d ":" -f 1)
-	INFO=$(echo "$INFO" | tail -n +$FIRSTLINE)
-	LASTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
-	if [ -z "$LASTLINE" ]; then
-		LASTLINE=$(echo "$INFO" | grep -m 1 -n "|+" | cut -d ":" -f 1)
-	fi
-	if [ -z "$LASTLINE" ]; then
-		LASTLINE=$(echo "$INFO" | wc -l)
-	fi
-	INFO=$(echo "$INFO" | head -n $LASTLINE)
+INFO=$(mkvinfo "$MKVFILE")
+FIRSTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $DTSTRACK" | cut -d ":" -f 1)
+INFO=$(echo "$INFO" | tail -n +$FIRSTLINE)
+LASTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
+if [ -z "$LASTLINE" ]; then
+	LASTLINE=$(echo "$INFO" | grep -m 1 -n "|+" | cut -d ":" -f 1)
 fi
+if [ -z "$LASTLINE" ]; then
+	LASTLINE=$(echo "$INFO" | wc -l)
+fi
+INFO=$(echo "$INFO" | head -n $LASTLINE)
+
 doprint "RESULT:INFO=\n$INFO"
+doprint "-------------------------------"
 
 #Get the language for the DTS track specified
 doprint ""
 doprint $"Extract language from track info."
 doprint '> echo "$INFO" | grep -m 1 \"Language\" | cut -d \" \" -f 5'
 
-DTSLANG=$"DTSLANG" #Value for debugging
 dopause
-if [ $EXECUTE = 1 ]; then
-	DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
-	if [ -z "$DTSLANG" ]; then
-		DTSLANG=$"eng"
-	fi
+DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
+if [ -z "$DTSLANG" ]; then
+	DTSLANG=$"eng"
 fi
 doprint "RESULT:DTSLANG=$DTSLANG"
 
@@ -466,11 +460,8 @@ if [ -z $DTSNAME ]; then
 	doprint ""
 	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
 	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
-	DTSNAME="DTSNAME" #Value for debugging
 	dopause
-	if [ $EXECUTE = 1 ]; then
-		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
-	fi
+	DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
 	doprint "RESULT:DTSNAME=$DTSNAME"
 fi
 
